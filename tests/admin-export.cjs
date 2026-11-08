@@ -29,6 +29,12 @@ const { chromium } = require('playwright');
       { type: 'Feature', id: 'a', geometry: { type: 'Polygon', coordinates: [[[139.45, 36.14], [139.46, 36.14], [139.46, 36.15], [139.45, 36.14]]] }, properties: { kind: 'polygon', title: 'Area' } },
     ] });
     const a = fixture('old', '2026-01-01'), b = fixture('new', '2026-02-01');
+    b.metadata.research = {
+      version: '2026-11-06', source: 'drawing-map',
+      respondent: { relationship: ['今、住んでいる'], frequency: '今、住んでいる', ageGroup: '20代' },
+      discoveries: b.features.map((f, i) => ({ featureId: f.id, featureIndex: i, answer: ['SNS・動画で', '自分で考えたルート・エリア', '偶然通りかかって'][i] })),
+    };
+    b.metadata.consent = { accepted: true, license: 'PDL-1.0', scope: 'features', version: '2026-11-04' };
     await page.locator('#file').setInputFiles([a, b].map((s, i) => ({ name: `${i}.geojson`, mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(s)) })));
     await page.locator('#subs li').first().waitFor();
     assert.equal(await page.locator('#subs img, #subs script').count(), 0);
@@ -44,13 +50,31 @@ const { chromium } = require('playwright');
       assert.deepEqual(single.features, [b.features[i]]);
       assert.equal(single.metadata.originalSubmissionId, 'new');
       assert.equal(single.metadata.submissionId, `new-feature-${i + 1}`);
+      assert.deepEqual(single.metadata.research.respondent, b.metadata.research.respondent);
+      assert.deepEqual(single.metadata.consent, b.metadata.consent);
+      assert.equal(single.metadata.research.discoveries.length, 1);
+      assert.equal(single.metadata.research.discoveries[0].answer, b.metadata.research.discoveries[i].answer);
+      assert.equal(single.metadata.research.discoveries[0].featureId, single.features[0].id);
+      assert.equal(single.metadata.research.discoveries[0].featureIndex, 0);
+      assert.equal(single.metadata.research.discoveries[0].originalFeatureIndex, i);
     }
+    assert.deepEqual(await download(page.locator('#subs button[data-submission]').first()), b);
+    const legacy = await download(page.locator('#subs li').nth(1).locator('[data-feature="0"]'));
+    assert.equal(legacy.metadata.research, undefined);
     assert.equal((await download(page.locator('#exportBtn'))).features.length, 6);
     await page.locator('[data-cat="none"]').uncheck();
     assert.equal((await download(page.locator('#exportBtn'))).features.length, 0);
     assert.deepEqual((await download(page.locator('#subs li').first().locator('[data-feature="0"]'))).features, [b.features[0]]);
     await page.setViewportSize({ width: 390, height: 844 });
     assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
-    console.log('PASS: per-submission, point/line/polygon, sorted mapping, filter isolation, escaping, mobile width');
+    const selected = await download(page.locator('#subs li').first().locator('[data-feature="1"]'));
+    await page.reload();
+    await page.locator('#file').setInputFiles({ name: 'single.geojson', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(selected)) });
+    await page.locator('#subs li').first().waitFor();
+    const repeated = await download(page.locator('#subs [data-feature="0"]'));
+    assert.deepEqual(repeated.metadata.research, selected.metadata.research);
+    assert.equal(repeated.metadata.originalSubmissionId, 'new');
+    assert.deepEqual(repeated.features, selected.features);
+    console.log('PASS: respondent/consent retained; discovery isolated for point/line/polygon; original unchanged; legacy, re-import, filters, escaping, mobile');
   } finally { await browser.close(); }
 })().catch(error => { console.error(error); process.exitCode = 1; });

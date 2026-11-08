@@ -89,6 +89,7 @@
 
   <section>
     <h2>投稿一覧・個別保存</h2>
+    <p class="muted">保存ファイルは管理・研究用です。名前・感想・属性を含むため、そのまま公開しないでください。</p>
     <ul id="subs"></ul>
   </section>
 </aside>
@@ -280,9 +281,20 @@
     const originalId = submission.metadata?.submissionId || `submission-${index + 1}`;
     const fc = { ...submission, features: [feature], metadata: {
       ...submission.metadata,
-      originalSubmissionId: originalId,
+      originalSubmissionId: submission.metadata?.originalSubmissionId || originalId,
       submissionId: `${originalId}-feature-${featureIndex + 1}`,
     } };
+    const research = submission.metadata?.research;
+    if (research) {
+      // The exported collection contains one feature, so its local index is zero.
+      // Retain source provenance separately and never mutate the original submission.
+      const discoveries = Array.isArray(research.discoveries) ? research.discoveries : [];
+      fc.metadata.research = { ...research, discoveries: discoveries
+        .filter(d => d && (feature.id != null && d.featureId != null
+          ? String(d.featureId) === String(feature.id)
+          : d.featureIndex === featureIndex))
+        .map(d => ({ ...d, originalFeatureIndex: d.originalFeatureIndex ?? d.featureIndex ?? featureIndex, featureIndex: 0 })) };
+    }
     downloadGeoJSON(fc, `gyoda-submission-${index + 1}-feature-${featureIndex + 1}.geojson`);
   });
 
