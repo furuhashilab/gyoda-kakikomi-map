@@ -1,8 +1,8 @@
-# 行田みんなの書き込みマップ
+# みんつく行田マップ｜書き込みページ
 
 **GIS を触ったことがない人でも、地図に「場所・ルート・エリア」を書き込んで送れるか？** を試すプロトタイプです。
 
-### ▶ [公開ページを開く](https://furuhashilab.github.io/Hackathon_Oct_ShotaArakawa/)
+### ▶ [公開ページを開く](https://furuhashilab.github.io/gyoda-kakikomi-map/)
 
 ![地図に場所・ルート・エリアを書き込んだ画面](docs/screenshot-map.jpg)
 
@@ -19,7 +19,7 @@
 
 ## 背景
 
-卒業研究で作っている [行田市まるわかり観光マップ](https://github.com/furuhashilab/2026gsc_ShotaArakawa) は、利用者の声を集めて複数人で作り上げる **「育てる観光マップ」** を目指しています。
+卒業研究で作っている [みんつく行田マップ](https://github.com/furuhashilab/2026gsc_ShotaArakawa) は、利用者の声を集めて複数人で作り上げる **「育てる観光マップ」** を目指しています。
 
 そこで、文字だけでなく **地図に直接描いて** おすすめの場所や歩きたいルートを教えてもらえる仕組みを作り、
 GIS に詳しくない一般の人でも使えるかを試しました。
